@@ -8,6 +8,21 @@ Tuesday, with Wednesday morning as buffer only.
 
 Target: **submit Tuesday night IST.**
 
+## Prerequisites — settle these before writing code
+
+Eligibility is a disqualification risk, not a formality. The rules restrict
+entry to **students**, above the legal age of majority in their country of
+residence. Companies and professional organisations are excluded. Every team
+member has to qualify, not just the submitter.
+
+- [ ] Both of us confirmed as students, above age of majority
+- [ ] Registered on Devpost — joining the hackathon is a separate step from
+      having an account
+- [ ] Harsh added as a team member on the Devpost submission
+- [ ] Paritok account created at paritok.com and an API key issued from the
+      dashboard — this blocks Wave 0, and the site was returning errors on
+      Aug 1, so do it first rather than assuming it takes a minute
+
 ## What the competition actually requires
 
 Everything below is mandatory. Nothing else is.
@@ -19,8 +34,26 @@ Everything below is mandatory. Nothing else is.
 - [ ] Text description covering how Paritok was used
 - [ ] Demo video under 3 minutes, public on YouTube or Vimeo
 - [ ] `examples/` folder with sample outputs — optional but cheap and judged
-- [ ] `hackathon-feedback` GitHub issue — separate $50 prize lane
+- [ ] `hackathon-feedback` GitHub issue — counts twice, see below
 - [ ] Social post tagged `#BuiltWithParitok` — separate $50 prize lane
+
+## How we are scored
+
+Six criteria. The submission text should visibly answer each one.
+
+| Criterion | Our answer |
+|---|---|
+| Use of Paritok | Compression is the mechanism, not a wrapper — retrieval lands in `tool_result` on purpose, measured three ways |
+| Technical execution | Runs end to end from a clean clone; `main` stays green |
+| Originality | Over-retrieval as a policy that only becomes affordable under compression |
+| Real-world usefulness | Code agents burn most of their input budget on file reads and tool output; anyone running one at scale pays for this daily |
+| Submission quality | README a judge can follow in ten minutes, video under three |
+| Bonus: OSS contribution | Findings filed as issues on the Paritok repo |
+
+The feedback issue is **not just a side prize**. It is also the sixth judging
+criterion — "thoughtful feedback and contributions to Paritok… will be looked on
+favorably" — so it affects the main placing. File it as soon as we have a real
+finding, not on the last day.
 
 ## Agents
 
@@ -61,12 +94,13 @@ end, through the proxy.
 `ragmod bench`: the same task set through the baseline and through Ragmod, with
 input tokens, answer quality, and latency recorded. Fixed question set chosen
 and committed.
-*Done when:* a savings table can be regenerated with one command.
+*Done when:* a savings table can be regenerated with one command. Any Paritok
+finding from Waves 0–2 is filed as a `hackathon-feedback` issue by Monday night.
 
 **Wave 3 — Tuesday**
 README with setup instructions a judge can follow in under ten minutes,
 `examples/` with saved transcripts and the savings table, demo video, Devpost
-text, feedback issue, social post. Submit.
+text, social post. Submit.
 
 Wednesday morning is buffer for a failed upload or a broken link, nothing else.
 

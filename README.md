@@ -1,14 +1,21 @@
 # Ragmod
 
-Token-efficient RAG, powered by [Paritok](https://paritok.com).
+[![Built with Paritok](https://img.shields.io/badge/Built%20with-Paritok-1f2d3d)](https://github.com/Paritok-official/paritok-4b-v1)
 
-Ragmod is a retrieval-augmented generation app that routes LLM traffic through Paritok's context compression proxy — so you keep answer quality while cutting input tokens.
+A retrieval agent for codebases. Ask a question about a repository, get an answer with `file:line` citations.
+
+Retrieval runs through tools, so every chunk of code arrives as a `tool_result` — the content [Paritok](https://github.com/Paritok-official/paritok-4b-v1)'s 4B compressor is trained on. That lets Ragmod retrieve generously and stay cheap: recall goes up, the bill does not.
 
 > Built for **[Build with Paritok: The Token-Efficiency Hackathon](https://build-with-paritok.devpost.com/)**.
 
 ## Status
 
-Early scaffold. Clone, open a PR, ship features.
+Early scaffold — design is settled, implementation starting.
+
+- [Architecture](docs/ARCHITECTURE.md) — what we're building and why
+- [Paritok integration](docs/PARITOK.md) — how compression is wired and measured
+- [Build plan](docs/PLAN.md) — waves, ownership, deadline
+- [Critique](docs/CRITIQUE.md) — what the first design got wrong
 
 ## Quick start
 
@@ -21,7 +28,7 @@ More setup (deps, Paritok proxy, env vars) coming soon.
 
 ## Paritok
 
-This project uses [Paritok](https://github.com/Paritok-official/paritok-4b-v1) as a proxy between the agent/RAG stack and the LLM to compress context and reduce input tokens. Production demos should point at Paritok's **hosted GPU** (`use_gpu_server: true`) so savings show on the dashboard.
+Built with [Paritok](https://github.com/Paritok-official/paritok-4b-v1). Every LLM call leaves through the Paritok proxy running against the **hosted GPU** (`use_gpu_server: true`), which compresses tool results, accumulated history, and unused tool schemas before the request reaches the provider. See [docs/PARITOK.md](docs/PARITOK.md) for the wiring and the measurement method.
 
 ## Contributing
 

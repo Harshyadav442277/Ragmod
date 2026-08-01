@@ -54,18 +54,25 @@ class RepositoryTools:
         if glob:
             command.extend(["--glob", glob])
         command.extend([pattern, "."])
-        completed = subprocess.run(
-            command,
-            cwd=self.root,
-            text=True,
-            capture_output=True,
-            timeout=30,
-            check=False,
-        )
-        if completed.returncode not in (0, 1):
-            raise ValueError(completed.stderr.strip() or "ripgrep failed")
+        try:
+            completed = subprocess.run(
+                command,
+                cwd=self.root,
+                text=True,
+                capture_output=True,
+                timeout=30,
+                check=False,
+            )
+            if completed.returncode not in (0, 1):
+                raise ValueError(completed.stderr.strip() or "ripgrep failed")
+            all_lines = completed.stdout.splitlines()
+        except FileNotFoundError:
+            # ripgrep not installed — try git grep, then pure-Python fallback
+            all_lines = self._git_grep_fallback(pattern, glob)
+            if all_lines is None:
+                all_lines = self._python_search(pattern, glob)
 
-        hits = completed.stdout.splitlines()[:MAX_SEARCH_LINES]
+        hits = all_lines[:MAX_SEARCH_LINES]
         citations = []
         for hit in hits:
             parts = hit.split(":", 2)
@@ -74,7 +81,7 @@ class RepositoryTools:
             citations.append(
                 {"path": Path(parts[0]).as_posix(), "start": int(parts[1]), "end": int(parts[1])}
             )
-        suffix = "\n[truncated after 200 matches]" if len(completed.stdout.splitlines()) > len(hits) else ""
+        suffix = "\n[truncated after 200 matches]" if len(all_lines) > len(hits) else ""
         content = "\n".join(hits) + suffix
         if not content:
             content = "No matches found."
@@ -83,6 +90,47 @@ class RepositoryTools:
             content=content,
             meta={"pattern": pattern, "glob": glob, "citations": citations},
         )
+
+    def _git_grep_fallback(self, pattern: str, glob: str | None) -> list[str] | None:
+        """Try git grep as a fallback when ripgrep is missing."""
+        command = ["git", "grep", "-n", "--no-color", "-I", pattern, "--", "."]
+        try:
+            completed = subprocess.run(
+                command,
+                cwd=self.root,
+                text=True,
+                capture_output=True,
+                timeout=30,
+                check=False,
+            )
+            if completed.returncode not in (0, 1):
+                return None
+            return completed.stdout.splitlines()
+        except FileNotFoundError:
+            return None
+
+    def _python_search(self, pattern: str, glob_filter: str | None = None) -> list[str]:
+        """Pure-Python line search — last resort when neither rg nor git is available."""
+        hits: list[str] = []
+        skip_dirs = {".git", "__pycache__", "node_modules", ".venv", "venv"}
+        for path in sorted(self.root.rglob("*")):
+            if not path.is_file():
+                continue
+            rel = path.relative_to(self.root)
+            if any(part in skip_dirs or part.startswith(".") for part in rel.parts):
+                continue
+            if glob_filter and not rel.match(glob_filter):
+                continue
+            try:
+                lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+            except Exception:
+                continue
+            for line_no, line in enumerate(lines, start=1):
+                if pattern in line:
+                    hits.append(f"{rel.as_posix()}:{line_no}:{line}")
+                    if len(hits) >= MAX_SEARCH_LINES:
+                        return hits
+        return hits
 
     def read_file(
         self,

@@ -1,4 +1,4 @@
-"""Tool names and OpenAI-style schemas (stubbed until Wave 1)."""
+"""Tool names and OpenAI-style schemas for the Ragmod agent."""
 
 from __future__ import annotations
 
@@ -18,8 +18,14 @@ def openai_tool_schemas() -> list[dict[str, Any]]:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "pattern": {"type": "string"},
-                        "glob": {"type": "string"},
+                        "pattern": {
+                            "type": "string",
+                            "description": "ripgrep regular expression",
+                        },
+                        "glob": {
+                            "type": "string",
+                            "description": "Optional gitignore-style file glob, e.g. *.py",
+                        },
                     },
                     "required": ["pattern"],
                 },
@@ -34,8 +40,14 @@ def openai_tool_schemas() -> list[dict[str, Any]]:
                     "type": "object",
                     "properties": {
                         "path": {"type": "string"},
-                        "start": {"type": "integer"},
-                        "end": {"type": "integer"},
+                        "start": {
+                            "type": "integer",
+                            "description": "Optional 1-based starting line",
+                        },
+                        "end": {
+                            "type": "integer",
+                            "description": "Optional 1-based ending line",
+                        },
                     },
                     "required": ["path"],
                 },

@@ -100,6 +100,11 @@ Answers carry `file:line` citations.
 *Done when:* a real question against a real repo is answered correctly, end to
 end, through the proxy.
 
+Implementation is complete locally when `pytest -q` passes. The final live gate
+is `ragmod ask "How does the proxy turn raw stats into savings?" --repo .` with
+the Wave 0 proxy running; its answer must include source ranges and appear in
+the Paritok dashboard.
+
 **Wave 2 — Monday**
 `ragmod bench`: the same task set through the baseline and through Ragmod, with
 input tokens, answer quality, and latency recorded. Fixed question set chosen

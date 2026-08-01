@@ -10,14 +10,14 @@ Retrieval runs through tools, so every chunk of code arrives as a `tool_result` 
 
 ## Status
 
-**Wave 0 scaffold** — contracts frozen, gateway + hosted-GPU proxy wiring, smoke test that proves `/stats` savings.
+**Wave 1** — proxy-backed multi-turn code retrieval with generous tool results and `file:line` citations.
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Paritok integration](docs/PARITOK.md)
 - [Build plan](docs/PLAN.md)
 - [Critique](docs/CRITIQUE.md)
 
-## Quick start (Wave 0)
+## Quick start
 
 ```bash
 git clone https://github.com/shreshth006/Ragmod.git
@@ -51,6 +51,16 @@ ragmod stats
 ```
 
 Confirm the same traffic on the [Paritok dashboard](https://paritok.com).
+
+Ask Ragmod about the current checkout while that proxy remains running:
+
+```bash
+ragmod ask "How does the proxy turn raw stats into savings?" --repo .
+```
+
+Ragmod searches and reads through tool calls, sends those `tool_result` blocks to
+the proxy, then prints the answer and source ranges. The default tool-turn limit
+is eight; use `--max-turns` to lower it during a quick demo.
 
 ## Paritok
 

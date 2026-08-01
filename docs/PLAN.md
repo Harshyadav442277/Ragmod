@@ -84,6 +84,16 @@ running, one real compressed call.
 *Done when:* `/stats` shows non-zero `tokens_saved` and the call appears on the
 Paritok dashboard.
 
+**Done (2026-08-01).** Scaffold + hosted-GPU smoke passed locally:
+
+- `/stats`: `tokens_saved=6761`, ratio `0.18` (Groq `llama-3.1-8b-instant` upstream)
+- Confirm the same traffic on the Paritok dashboard before calling Wave 0 closed for submission.
+
+```bash
+./scripts/start_proxy.sh          # terminal 1
+python scripts/wave0_smoke.py     # terminal 2
+```
+
 **Wave 1 — Sunday**
 Agent loop with `search_repo`, `read_file`, `list_dir`, `run_tests`. Multi-turn.
 Answers carry `file:line` citations.

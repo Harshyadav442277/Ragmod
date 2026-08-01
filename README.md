@@ -10,32 +10,67 @@ Retrieval runs through tools, so every chunk of code arrives as a `tool_result` 
 
 ## Status
 
-Early scaffold — design is settled, implementation starting.
+**Wave 0 scaffold** — contracts frozen, gateway + hosted-GPU proxy wiring, smoke test that proves `/stats` savings.
 
-- [Architecture](docs/ARCHITECTURE.md) — what we're building and why
-- [Paritok integration](docs/PARITOK.md) — how compression is wired and measured
-- [Build plan](docs/PLAN.md) — waves, ownership, deadline
-- [Critique](docs/CRITIQUE.md) — what the first design got wrong
+- [Architecture](docs/ARCHITECTURE.md)
+- [Paritok integration](docs/PARITOK.md)
+- [Build plan](docs/PLAN.md)
+- [Critique](docs/CRITIQUE.md)
 
-## Quick start
+## Quick start (Wave 0)
 
 ```bash
 git clone https://github.com/shreshth006/Ragmod.git
 cd Ragmod
+python3 -m venv .venv
+source .venv/bin/activate
+
+# CPU torch first (avoids huge CUDA wheels)
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+pip install -e ".[paritok]"
+
+cp .env.example .env
+# edit .env: PARITOK_API_KEY + OPENAI_API_KEY
 ```
 
-More setup (deps, Paritok proxy, env vars) coming soon.
+Terminal 1 — start the proxy ([hackathon resources](https://build-with-paritok.devpost.com/resources)):
+
+```bash
+source .venv/bin/activate
+./scripts/start_proxy.sh
+# keep this terminal open
+```
+
+Terminal 2 — smoke call with a fat `tool_result`:
+
+```bash
+source .venv/bin/activate
+python scripts/wave0_smoke.py
+# expect: WAVE 0 PASS — tokens_saved=...
+ragmod stats
+```
+
+Confirm the same traffic on the [Paritok dashboard](https://paritok.com).
 
 ## Paritok
 
-Built with [Paritok](https://github.com/Paritok-official/paritok-4b-v1). Every LLM call leaves through the Paritok proxy running against the **hosted GPU** (`use_gpu_server: true`), which compresses tool results, accumulated history, and unused tool schemas before the request reaches the provider. See [docs/PARITOK.md](docs/PARITOK.md) for the wiring and the measurement method.
+Built with [Paritok](https://github.com/Paritok-official/paritok-4b-v1). Every LLM call leaves through the Paritok proxy with **hosted GPU** (`use_gpu_server: true`). See [docs/PARITOK.md](docs/PARITOK.md).
+
+## Layout
+
+| Path | Owner wave | Role |
+|---|---|---|
+| `ragmod/contracts.py` | 0 | Frozen shared types |
+| `ragmod/gateway/` | 0 | Proxy helpers + `/stats` → `SavingsStats` |
+| `ragmod/tools/` | 1 | `search_repo` / `read_file` / `list_dir` / `run_tests` |
+| `ragmod/agent/` | 1 | Tool-calling loop |
+| `ragmod/bench/` | 2 | A/B harness |
+| `paritok.yaml` | 0 | Hosted GPU config |
+| `scripts/wave0_smoke.py` | 0 | Gate: non-zero `tokens_saved` |
 
 ## Contributing
 
-1. Fork the repo (or use a feature branch if you have write access)
-2. Create a branch: `git checkout -b feature/your-thing`
-3. Commit and push
-4. Open a PR against `main`
+Harsh: fork → PR into `main`. `main` stays the runnable demo path.
 
 ## License
 

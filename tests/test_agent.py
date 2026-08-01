@@ -46,6 +46,9 @@ def test_agent_executes_tool_and_returns_citations(tmp_path):
     assert answer["text"] == "The answer is implemented in answer.py."
     assert answer["citations"] == [{"path": "answer.py", "start": 1, "end": 2}]
     assert answer["turns"] == 2
+    bootstrap_message = client.payloads[0]["messages"][-1]
+    assert bootstrap_message["role"] == "tool"
+    assert bootstrap_message["content"].startswith("# tool_result search_repo")
     tool_message = client.payloads[1]["messages"][-1]
     assert tool_message["role"] == "tool"
     assert tool_message["content"].startswith("# tool_result read_file")

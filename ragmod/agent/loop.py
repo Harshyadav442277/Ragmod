@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -15,10 +16,17 @@ from ragmod.tools import RepositoryTools
 from ragmod.tools.base import openai_tool_schemas
 
 SYSTEM_PROMPT = """You are Ragmod, a codebase retrieval agent.
-Use the available tools before answering any question about the repository. Prefer
-search_repo to discover relevant files, then read_file for generous source context.
-Answer only from tool results. Be concise, explain uncertainty, and stop calling tools
-once you can answer. Your answer is cited separately from the tool metadata."""
+The conversation begins with a repository search result. Use it to choose relevant
+files, then call read_file for generous source context before answering. Answer only
+from tool results. Never say information is unavailable when the search result names
+relevant files; inspect those files instead. Be concise, explain uncertainty, and stop
+calling tools once you can answer. Your answer is cited separately from tool metadata."""
+
+_SEARCH_STOPWORDS = {
+    "about", "available", "code", "does", "find", "from", "have", "how", "info",
+    "information", "into", "please", "repository", "requested", "that", "the", "this",
+    "turn", "using", "what", "where", "which", "with", "would", "you", "your",
+}
 
 
 class ChatClient(Protocol):
@@ -77,6 +85,35 @@ def ask(
         {"role": "user", "content": question},
     ]
     citations: list[Citation] = []
+
+    # Seed every run with a broad, on-distribution tool result. Small models are much
+    # more reliable at selecting a file from concrete hits than inventing their first
+    # ripgrep query, while Paritok still sees the retrieval as a tool_result.
+    bootstrap_args = {"pattern": _bootstrap_search_pattern(question)}
+    bootstrap = tools.execute("search_repo", bootstrap_args)
+    messages.extend(
+        [
+            {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {
+                        "id": "call_bootstrap_search",
+                        "type": "function",
+                        "function": {
+                            "name": "search_repo",
+                            "arguments": json.dumps(bootstrap_args),
+                        },
+                    }
+                ],
+            },
+            {
+                "role": "tool",
+                "tool_call_id": "call_bootstrap_search",
+                "content": _tool_content(bootstrap),
+            },
+        ]
+    )
 
     for turn in range(1, max_turns + 1):
         payload = {
@@ -148,6 +185,17 @@ def _tool_call_parts(tool_call: dict[str, Any]) -> tuple[str, dict[str, Any]]:
 def _tool_content(result: ToolResult) -> str:
     """Keep a tool_result-shaped payload so Paritok can compress the large content."""
     return f"# tool_result {result['name']}\n{result['content']}"
+
+
+def _bootstrap_search_pattern(question: str) -> str:
+    """Turn a question into a broad, safe regex for the first repository search."""
+    terms = []
+    for term in re.findall(r"[A-Za-z_][A-Za-z0-9_]{2,}", question.lower()):
+        if term not in _SEARCH_STOPWORDS and term not in terms:
+            terms.append(term)
+        if len(terms) == 5:
+            break
+    return "|".join(re.escape(term) for term in terms) or "TODO|FIXME"
 
 
 def _dedupe_citations(citations: list[Citation]) -> list[Citation]:

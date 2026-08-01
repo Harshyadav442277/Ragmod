@@ -17,10 +17,24 @@ if [[ -z "${PARITOK_API_KEY:-}" ]]; then
   exit 1
 fi
 
+PYTHON=()
+if [[ -n "${RAGMOD_PYTHON:-}" ]]; then
+  PYTHON=("$RAGMOD_PYTHON")
+elif python -c "import sys" >/dev/null 2>&1; then
+  PYTHON=(python)
+elif python3 -c "import sys" >/dev/null 2>&1; then
+  PYTHON=(python3)
+elif py -3 -c "import sys" >/dev/null 2>&1; then
+  PYTHON=(py -3)
+else
+  echo "No usable Python interpreter found. Set RAGMOD_PYTHON to your Python executable." >&2
+  exit 1
+fi
+
 # Inject key into a temp config so the empty api_key in committed yaml is fine.
 TMP_CFG="$(mktemp)"
 trap 'rm -f "$TMP_CFG"' EXIT
-SRC="$ROOT/paritok.yaml" DST="$TMP_CFG" python3 - <<'PY'
+SRC="$ROOT/paritok.yaml" DST="$TMP_CFG" "${PYTHON[@]}" - <<'PY'
 import os
 import yaml
 

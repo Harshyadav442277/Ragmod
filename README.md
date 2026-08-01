@@ -41,6 +41,9 @@ source .venv/bin/activate
 # keep this terminal open
 ```
 
+On Windows Git Bash, the script falls back to the `py -3` launcher. If your
+Python install is not on `PATH`, set `RAGMOD_PYTHON` to its executable first.
+
 Terminal 2 — smoke call with a fat `tool_result`:
 
 ```bash

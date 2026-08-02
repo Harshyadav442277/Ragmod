@@ -132,6 +132,15 @@ README with setup instructions a judge can follow in under ten minutes,
 `examples/` with saved transcripts and the savings table, demo video, Devpost
 text, social post. Submit.
 
+**Pack landed (2026-08-02).** Judge README, `docs/DEVPOST.md`, `docs/VIDEO_SCRIPT.md`,
+`docs/SOCIAL.md`, examples present. Feedback issue filed (#19).
+
+Still human-owned before submit:
+- [ ] Record + upload demo video (<3 min) from `docs/VIDEO_SCRIPT.md`
+- [ ] Paste video URL + Paritok account email into Devpost
+- [ ] Publish social post `#BuiltWithParitok` (optional prize lane)
+- [ ] Hit Submit on Devpost (deadline Wed Aug 5, 12:30 PM IST)
+
 Wednesday morning is buffer for a failed upload or a broken link, nothing else.
 
 ## Risks

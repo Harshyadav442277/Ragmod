@@ -3,19 +3,19 @@
     "arm": "baseline",
     "task_id": "stats_to_savings",
     "question": "How does the proxy turn raw stats into savings?",
-    "prompt_tokens": 2955,
-    "completion_tokens": 119,
+    "prompt_tokens": 2047,
+    "completion_tokens": 73,
     "requests": 2,
-    "latency_s": 0.683,
+    "latency_s": 0.669,
     "turns": 2,
     "quality": 2,
     "quality_max": 2,
-    "answer": "The proxy turns raw stats into savings by using the `stats_to_savings` function, which is not shown in the provided code snippet. However, based on the context, it appears that this function takes the raw stats from the Paritok proxy and converts them into savings using some unknown logic or formula. The exact implementation of this function is not provided in the code snippet, but it is likely defined elsewhere in the codebase.",
+    "answer": "The proxy turns raw stats into savings by calling the `stats_to_savings` function, which is implemented in the `proxy.py` file. This function is responsible for converting the raw statistics into savings.",
     "citations": [
       {
         "path": "ragmod/gateway/proxy.py",
         "start": 1,
-        "end": 105
+        "end": 7
       }
     ],
     "error": null,
@@ -25,41 +25,41 @@
     "arm": "ragmod",
     "task_id": "stats_to_savings",
     "question": "How does the proxy turn raw stats into savings?",
-    "prompt_tokens": 3440,
-    "completion_tokens": 95,
+    "prompt_tokens": 3190,
+    "completion_tokens": 146,
     "requests": 2,
-    "latency_s": 4.53,
+    "latency_s": 6.711,
     "turns": 2,
     "quality": 2,
     "quality_max": 2,
-    "answer": "The proxy turns raw stats into savings by calculating the difference between the original and compressed token counts, and then using this difference to determine the estimated cost saved in USD. The `stats_to_savings` function takes a dictionary of raw stats as input and returns a `SavingsStats` object with the calculated savings.",
+    "answer": "The proxy turns raw stats into savings by calling the `stats_to_savings` function, which is defined in `ragmod/gateway/proxy.py`. This function takes a dictionary of raw stats as input and returns a `SavingsStats` object. The function calculates the original, compressed, and saved tokens, as well as the compression ratio and estimated cost saved in USD. The `stats_to_savings` function is called in various places in the codebase, including in the `ragmod/cli.py` and `ragmod/bench/run.py` files.",
     "citations": [
       {
         "path": "ragmod/gateway/proxy.py",
-        "start": 63,
+        "start": 70,
         "end": 125
       }
     ],
     "error": null,
-    "proxy_tokens_saved_delta": 5086
+    "proxy_tokens_saved_delta": 5630
   },
   {
     "arm": "baseline",
     "task_id": "search_excludes",
     "question": "How does search_repo keep ripgrep out of .venv and __pycache__?",
-    "prompt_tokens": 2131,
-    "completion_tokens": 86,
+    "prompt_tokens": 2162,
+    "completion_tokens": 77,
     "requests": 2,
-    "latency_s": 0.665,
+    "latency_s": 1.082,
     "turns": 2,
     "quality": 1,
     "quality_max": 2,
-    "answer": "The `search_repo` function keeps ripgrep out of `.venv` and `__pycache__` by rejecting paths outside the repository in `test_tools_reject_paths_outside_repository` and by excluding them from the search pattern in `test_search_repo_returns_line_citations`.",
+    "answer": "The `search_repo` function keeps ripgrep out of `.venv` and `__pycache__` by rejecting paths outside the repository in `test_tools_reject_paths_outside_repository` and by excluding them in the glob pattern.",
     "citations": [
       {
         "path": "tests/test_tools.py",
         "start": 12,
-        "end": 24
+        "end": 25
       }
     ],
     "error": null,
@@ -69,41 +69,35 @@
     "arm": "ragmod",
     "task_id": "search_excludes",
     "question": "How does search_repo keep ripgrep out of .venv and __pycache__?",
-    "prompt_tokens": 2841,
-    "completion_tokens": 133,
-    "requests": 2,
-    "latency_s": 5.415,
-    "turns": 2,
-    "quality": 2,
+    "prompt_tokens": 6472,
+    "completion_tokens": 191,
+    "requests": 5,
+    "latency_s": 2.838,
+    "turns": 5,
+    "quality": 0,
     "quality_max": 2,
-    "answer": "Ripgrep is kept out of `.venv` and `__pycache__` by the `_RG_EXCLUDE_GLOBS` tuple in the `repo.py` file. This tuple contains a list of directories and files that ripgrep should exclude from its search. The relevant entries are `\"!.venv\"`, `\"!venv\"`, and `\"!__pycache__\"`, which tell ripgrep to exclude the `.venv` directory and the `__pycache__` directory.",
-    "citations": [
-      {
-        "path": "ragmod/tools/repo.py",
-        "start": 1,
-        "end": 62
-      }
-    ],
+    "answer": "Stopped after 5 tool turns before reaching a final answer.",
+    "citations": [],
     "error": null,
-    "proxy_tokens_saved_delta": 2669
+    "proxy_tokens_saved_delta": 6280
   },
   {
     "arm": "baseline",
     "task_id": "bootstrap_search",
     "question": "Where does the agent bootstrap its first search_repo tool result before the model acts?",
-    "prompt_tokens": 3309,
-    "completion_tokens": 55,
+    "prompt_tokens": 2212,
+    "completion_tokens": 63,
     "requests": 2,
-    "latency_s": 0.628,
+    "latency_s": 0.486,
     "turns": 2,
     "quality": 2,
     "quality_max": 2,
-    "answer": "The agent bootsraps its first search_repo tool result from the file `./ragmod/agent/loop.py` at line 123.",
+    "answer": "The agent bootsraps its first search_repo tool result from the file `./ragmod/agent/loop.py` at lines 123-128.",
     "citations": [
       {
         "path": "ragmod/agent/loop.py",
         "start": 118,
-        "end": 247
+        "end": 133
       }
     ],
     "error": null,
@@ -113,14 +107,14 @@
     "arm": "ragmod",
     "task_id": "bootstrap_search",
     "question": "Where does the agent bootstrap its first search_repo tool result before the model acts?",
-    "prompt_tokens": 3938,
-    "completion_tokens": 56,
+    "prompt_tokens": 2901,
+    "completion_tokens": 61,
     "requests": 2,
-    "latency_s": 5.636,
+    "latency_s": 2.141,
     "turns": 2,
     "quality": 2,
     "quality_max": 2,
-    "answer": "The agent bootsraps its first search_repo tool result in the file `./ragmod/agent/loop.py`.",
+    "answer": "The agent bootsraps its first search_repo tool result in the file `./ragmod/agent/loop.py` at line 127.",
     "citations": [
       {
         "path": "ragmod/agent/loop.py",
@@ -129,6 +123,6 @@
       }
     ],
     "error": null,
-    "proxy_tokens_saved_delta": 1709
+    "proxy_tokens_saved_delta": 1719
   }
 ]

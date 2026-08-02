@@ -10,7 +10,7 @@ Retrieval runs through tools, so every chunk of code arrives as a `tool_result` 
 
 ## Status
 
-**Wave 1 done** — proxy-backed multi-turn code retrieval with generous tool results and `file:line` citations. Sample: [`examples/wave1_ask.txt`](examples/wave1_ask.txt).
+**Wave 2 done** — A/B bench + savings table. Ask sample: [`examples/wave1_ask.txt`](examples/wave1_ask.txt). Table: [`examples/savings_table.md`](examples/savings_table.md).
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Paritok integration](docs/PARITOK.md)
@@ -64,6 +64,17 @@ ragmod ask "How does the proxy turn raw stats into savings?" --repo .
 Ragmod searches and reads through tool calls, sends those `tool_result` blocks to
 the proxy, then prints the answer and source ranges. The default tool-turn limit
 is eight; use `--max-turns` to lower it during a quick demo.
+
+### A/B bench (Wave 2)
+
+With the proxy still running:
+
+```bash
+ragmod bench --repo . --out examples/savings_table.md
+```
+
+Compares tight baseline (direct upstream) vs generous Ragmod (Paritok proxy).
+Writes `examples/savings_table.md` + `.json`.
 
 ## Paritok
 

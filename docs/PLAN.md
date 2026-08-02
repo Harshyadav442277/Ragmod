@@ -116,6 +116,17 @@ and committed.
 *Done when:* a savings table can be regenerated with one command. Any Paritok
 finding from Waves 0–2 is filed as a `hackathon-feedback` issue by Monday night.
 
+**Done (2026-08-02).** Fixed tasks in `ragmod/bench/tasks.json`. Regenerate with:
+
+```bash
+ragmod bench --repo . --out examples/savings_table.md
+```
+
+Measured on Groq `llama-3.1-8b-instant`: Paritok `/stats` saved **9464** tokens on
+the generous Ragmod arms; quality matched or beat the tight baseline. Provider
+`prompt_tokens` vs tight baseline were higher (honest: over-retrieval residual
+can exceed tiny snippets). See `examples/savings_table.md`.
+
 **Wave 3 — Tuesday**
 README with setup instructions a judge can follow in under ten minutes,
 `examples/` with saved transcripts and the savings table, demo video, Devpost

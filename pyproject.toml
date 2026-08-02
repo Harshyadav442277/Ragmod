@@ -32,3 +32,6 @@ ragmod = "ragmod.cli:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["ragmod*"]
+
+[tool.setuptools.package-data]
+ragmod = ["bench/tasks.json"]

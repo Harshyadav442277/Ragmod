@@ -29,6 +29,31 @@ def main(argv: list[str] | None = None) -> int:
     p_ask.add_argument("--model", default=None, help="Upstream model name")
     p_ask.add_argument("--max-turns", type=int, default=8)
 
+    p_bench = sub.add_parser(
+        "bench",
+        help="A/B: tight baseline (direct) vs generous Ragmod (Paritok proxy)",
+    )
+    p_bench.add_argument("--repo", default=".", help="Repository to inspect")
+    p_bench.add_argument("--port", type=int, default=None, help="Paritok proxy port")
+    p_bench.add_argument("--model", default=None, help="Upstream model name")
+    p_bench.add_argument("--max-turns", type=int, default=6)
+    p_bench.add_argument(
+        "--cooldown",
+        type=float,
+        default=20.0,
+        help="Seconds to sleep between arms (Groq free-tier TPM)",
+    )
+    p_bench.add_argument(
+        "--out",
+        default="examples/savings_table.md",
+        help="Markdown table output path",
+    )
+    p_bench.add_argument(
+        "--tasks",
+        default=None,
+        help="Optional tasks JSON (default: ragmod/bench/tasks.json)",
+    )
+
     args = parser.parse_args(argv)
 
     from ragmod.gateway import (
@@ -56,6 +81,29 @@ def main(argv: list[str] | None = None) -> int:
             for citation in answer["citations"]:
                 print(f"- {citation['path']}:{citation['start']}-{citation['end']}")
         print(f"\nTurns: {answer['turns']}")
+        return 0
+
+    if args.cmd == "bench":
+        from pathlib import Path
+
+        from ragmod.bench import run_bench, write_savings_table
+
+        tasks = Path(args.tasks) if args.tasks else None
+        print("Running A/B bench (baseline direct+tight, ragmod proxy+generous)...")
+        results = run_bench(
+            args.repo,
+            tasks_path=tasks,
+            max_turns=args.max_turns,
+            model=args.model,
+            cooldown_s=args.cooldown,
+            proxy_port=args.port,
+        )
+        out = Path(args.out)
+        table = write_savings_table(results, out)
+        print(table)
+        print(f"Wrote {out} and {out.with_suffix('.json')}")
+        if any(r.error for r in results):
+            return 1
         return 0
 
     if args.cmd == "health":

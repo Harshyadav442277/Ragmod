@@ -37,7 +37,7 @@ class ChatClient(Protocol):
 
 
 class ProxyChatClient:
-    """Minimal OpenAI-compatible client with the Paritok proxy as its only target."""
+    """OpenAI-compatible client. Default target is the local Paritok proxy."""
 
     def __init__(
         self,
@@ -76,11 +76,31 @@ class ProxyChatClient:
         raise RuntimeError(f"Proxy request failed after retries: {last_detail}")
 
 
+class TrackingClient:
+    """Wraps a ChatClient and sums provider usage.prompt_tokens across turns."""
+
+    def __init__(self, inner: ChatClient) -> None:
+        self.inner = inner
+        self.prompt_tokens = 0
+        self.completion_tokens = 0
+        self.requests = 0
+
+    def complete(self, payload: dict[str, Any]) -> dict[str, Any]:
+        data = self.inner.complete(payload)
+        usage = data.get("usage") if isinstance(data, dict) else None
+        if isinstance(usage, dict):
+            self.prompt_tokens += int(usage.get("prompt_tokens") or 0)
+            self.completion_tokens += int(usage.get("completion_tokens") or 0)
+        self.requests += 1
+        return data
+
+
 def ask(
     question: str,
     repo: Path | str,
     *,
     client: ChatClient | None = None,
+    tools: RepositoryTools | None = None,
     model: str | None = None,
     max_turns: int = 8,
 ) -> AgentAnswer:
@@ -90,7 +110,7 @@ def ask(
     if max_turns < 1:
         raise ValueError("max_turns must be at least 1")
 
-    tools = RepositoryTools(repo)
+    tools = tools or RepositoryTools(repo)
     chat = client or ProxyChatClient()
     selected_model = model or os.environ.get("RAGMOD_MODEL", "gpt-4o-mini")
     messages: list[dict[str, Any]] = [

@@ -10,9 +10,7 @@ from typing import Any
 
 from ragmod.contracts import ToolResult
 
-MAX_SEARCH_LINES = 200
 MAX_LIST_ENTRIES = 200
-READ_CONTEXT_LINES = 40
 TEST_TIMEOUT_SECONDS = 120
 
 # Keep retrieval on-repo. Searching .venv/site-packages blows free-tier TPM and
@@ -29,13 +27,33 @@ _RG_EXCLUDE_GLOBS = (
 )
 
 
+class RetrievalPolicy:
+    """How generously tools expand context before it hits the LLM."""
+
+    def __init__(self, *, max_search_lines: int, read_context_lines: int, label: str) -> None:
+        self.max_search_lines = max_search_lines
+        self.read_context_lines = read_context_lines
+        self.label = label
+
+
+# Fair baseline without a compressor: tight snippets a sensible engineer would use.
+TIGHT = RetrievalPolicy(max_search_lines=15, read_context_lines=5, label="tight")
+# Ragmod policy: over-retrieve; Paritok absorbs the cost.
+GENEROUS = RetrievalPolicy(max_search_lines=200, read_context_lines=40, label="generous")
+
+
 class RepositoryTools:
     """Execute Ragmod's toolset, confined to one repository root."""
 
-    def __init__(self, root: Path | str) -> None:
+    def __init__(
+        self,
+        root: Path | str,
+        policy: RetrievalPolicy | None = None,
+    ) -> None:
         self.root = Path(root).resolve()
         if not self.root.is_dir():
             raise ValueError(f"Repository root is not a directory: {self.root}")
+        self.policy = policy or GENEROUS
 
     def execute(self, name: str, arguments: dict[str, Any]) -> ToolResult:
         handlers = {
@@ -85,7 +103,8 @@ class RepositoryTools:
             if all_lines is None:
                 all_lines = self._python_search(pattern, glob)
 
-        hits = all_lines[:MAX_SEARCH_LINES]
+        limit = self.policy.max_search_lines
+        hits = all_lines[:limit]
         citations = []
         for hit in hits:
             parts = hit.split(":", 2)
@@ -94,14 +113,19 @@ class RepositoryTools:
             citations.append(
                 {"path": Path(parts[0]).as_posix(), "start": int(parts[1]), "end": int(parts[1])}
             )
-        suffix = "\n[truncated after 200 matches]" if len(all_lines) > len(hits) else ""
+        suffix = f"\n[truncated after {limit} matches]" if len(all_lines) > len(hits) else ""
         content = "\n".join(hits) + suffix
         if not content:
             content = "No matches found."
         return ToolResult(
             name="search_repo",
             content=content,
-            meta={"pattern": pattern, "glob": glob, "citations": citations},
+            meta={
+                "pattern": pattern,
+                "glob": glob,
+                "citations": citations,
+                "policy": self.policy.label,
+            },
         )
 
     def _git_grep_fallback(self, pattern: str, glob: str | None) -> list[str] | None:
@@ -141,7 +165,7 @@ class RepositoryTools:
             for line_no, line in enumerate(lines, start=1):
                 if pattern in line:
                     hits.append(f"{rel.as_posix()}:{line_no}:{line}")
-                    if len(hits) >= MAX_SEARCH_LINES:
+                    if len(hits) >= self.policy.max_search_lines:
                         return hits
         return hits
 
@@ -165,8 +189,9 @@ class RepositoryTools:
             raise ValueError(f"File is empty: {path}")
         if requested_start > len(lines):
             raise ValueError(f"start line {requested_start} is beyond end of file ({len(lines)} lines)")
-        actual_start = max(1, requested_start - READ_CONTEXT_LINES)
-        actual_end = min(len(lines), requested_end + READ_CONTEXT_LINES)
+        pad = self.policy.read_context_lines
+        actual_start = max(1, requested_start - pad)
+        actual_end = min(len(lines), requested_end + pad)
         selected = lines[actual_start - 1 : actual_end]
         numbered = "\n".join(
             f"{line_no}: {line}" for line_no, line in enumerate(selected, start=actual_start)

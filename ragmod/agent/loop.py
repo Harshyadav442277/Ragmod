@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -16,11 +17,13 @@ from ragmod.tools import RepositoryTools
 from ragmod.tools.base import openai_tool_schemas
 
 SYSTEM_PROMPT = """You are Ragmod, a codebase retrieval agent.
-The conversation begins with a repository search result. Use it to choose relevant
-files, then call read_file for generous source context before answering. Answer only
-from tool results. Never say information is unavailable when the search result names
-relevant files; inspect those files instead. Be concise, explain uncertainty, and stop
-calling tools once you can answer. Your answer is cited separately from tool metadata."""
+The conversation begins with a repository search result. Pick the file that actually
+defines the behavior being asked about, then call read_file on that file before
+answering. Prefer implementation modules over scripts, tests, or docs when both match.
+Answer only from tool results. Never say information is unavailable when the search
+result names relevant files; inspect those files instead. Be concise, explain
+uncertainty, and stop calling tools once you can answer. Citations are attached from
+tool metadata — reading the right file matters."""
 
 _SEARCH_STOPWORDS = {
     "about", "available", "code", "does", "find", "from", "have", "how", "info",
@@ -49,18 +52,28 @@ class ProxyChatClient:
     def complete(self, payload: dict[str, Any]) -> dict[str, Any]:
         if not self.api_key:
             raise RuntimeError("OPENAI_API_KEY is required for the upstream model")
+        # Groq free tier TPM is tight; retry briefly on 429 after Paritok compresses.
+        delays = (2.0, 5.0, 15.0, 35.0)
+        last_detail = ""
         with httpx.Client(timeout=self.timeout) as client:
-            response = client.post(
-                f"{self.base_url}/v1/chat/completions",
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                json=payload,
-            )
-        try:
-            response.raise_for_status()
-            return response.json()
-        except (httpx.HTTPError, ValueError) as exc:
-            detail = response.text[:500]
-            raise RuntimeError(f"Proxy request failed: {detail}") from exc
+            for attempt, delay in enumerate((*delays, None)):
+                response = client.post(
+                    f"{self.base_url}/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {self.api_key}"},
+                    json=payload,
+                )
+                if response.status_code != 429:
+                    try:
+                        response.raise_for_status()
+                        return response.json()
+                    except (httpx.HTTPError, ValueError) as exc:
+                        detail = response.text[:500]
+                        raise RuntimeError(f"Proxy request failed: {detail}") from exc
+                last_detail = response.text[:500]
+                if delay is None:
+                    break
+                time.sleep(delay)
+        raise RuntimeError(f"Proxy request failed after retries: {last_detail}")
 
 
 def ask(
@@ -89,7 +102,9 @@ def ask(
     # Seed every run with a broad, on-distribution tool result. Small models are much
     # more reliable at selecting a file from concrete hits than inventing their first
     # ripgrep query, while Paritok still sees the retrieval as a tool_result.
-    bootstrap_args = {"pattern": _bootstrap_search_pattern(question)}
+    # Prefer source files for the seed search so free-tier TPM isn't spent on docs,
+    # while still sending a real, compressible tool_result through Paritok.
+    bootstrap_args = {"pattern": _bootstrap_search_pattern(question), "glob": "*.py"}
     bootstrap = tools.execute("search_repo", bootstrap_args)
     messages.extend(
         [

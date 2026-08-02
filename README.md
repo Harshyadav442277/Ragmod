@@ -10,7 +10,7 @@ Retrieval runs through tools, so every chunk of code arrives as a `tool_result` 
 
 ## Status
 
-**Wave 1** — proxy-backed multi-turn code retrieval with generous tool results and `file:line` citations.
+**Wave 1 done** — proxy-backed multi-turn code retrieval with generous tool results and `file:line` citations. Sample: [`examples/wave1_ask.txt`](examples/wave1_ask.txt).
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Paritok integration](docs/PARITOK.md)

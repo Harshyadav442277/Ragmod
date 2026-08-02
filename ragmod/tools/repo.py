@@ -15,6 +15,19 @@ MAX_LIST_ENTRIES = 200
 READ_CONTEXT_LINES = 40
 TEST_TIMEOUT_SECONDS = 120
 
+# Keep retrieval on-repo. Searching .venv/site-packages blows free-tier TPM and
+# is off-distribution for the Paritok story anyway.
+_RG_EXCLUDE_GLOBS = (
+    "!.git",
+    "!.venv",
+    "!venv",
+    "!__pycache__",
+    "!node_modules",
+    "!*.egg-info",
+    "!dist",
+    "!build",
+)
+
 
 class RepositoryTools:
     """Execute Ragmod's toolset, confined to one repository root."""
@@ -48,9 +61,9 @@ class RepositoryTools:
             "--no-heading",
             "--color",
             "never",
-            "--glob",
-            "!.git",
         ]
+        for exclude in _RG_EXCLUDE_GLOBS:
+            command.extend(["--glob", exclude])
         if glob:
             command.extend(["--glob", glob])
         command.extend([pattern, "."])

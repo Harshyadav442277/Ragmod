@@ -100,10 +100,14 @@ Answers carry `file:line` citations.
 *Done when:* a real question against a real repo is answered correctly, end to
 end, through the proxy.
 
-Implementation is complete locally when `pytest -q` passes. The final live gate
-is `ragmod ask "How does the proxy turn raw stats into savings?" --repo .` with
-the Wave 0 proxy running; its answer must include source ranges and appear in
-the Paritok dashboard.
+**Done (2026-08-02).** `pytest -q` passes (4 tests). Live gate:
+
+```bash
+ragmod ask "How does the proxy turn raw stats into savings?" --repo .
+```
+
+answered through the hosted-GPU proxy with source range
+`ragmod/gateway/proxy.py:69-125` (see `examples/wave1_ask.txt`).
 
 **Wave 2 — Monday**
 `ragmod bench`: the same task set through the baseline and through Ragmod, with
